@@ -71,7 +71,6 @@ async fn authenticate(ws: Ws, auth_header: String) -> Result<(Ws,String), warp::
 
 
 // Handle rejections (e.g., failed authentication)
-
 // Error response structure
 #[derive(Serialize)]
 struct ErrorResponse {
