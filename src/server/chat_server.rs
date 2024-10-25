@@ -4,6 +4,7 @@ use futures::{SinkExt, StreamExt};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::os::unix::raw::time_t;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
@@ -19,6 +20,7 @@ static USERS: Lazy<Arc<Mutex<HashMap<String, SplitSink<WebSocket, Message>>>>> =
 // Define the structure for JSON messages
 #[derive(Serialize, Deserialize, Debug)]
 struct IncomingMessage {
+    sent_at: String,
     from_id: String,
     to_id: String,
     message_type: String,
@@ -74,14 +76,18 @@ async fn handle_connection(websocket: WebSocket, username: String) {
                 };
 
                 // Serialize response to JSON and send it
-                let response_text = serde_json::to_string(&response).unwrap();
-                // outgoing_tx.send(response_text).unwrap();
+                let response_text = serde_json::to_string(&incoming).unwrap();
                 // add delay for 2 seconds
                 thread::sleep(Duration::from_secs(2));
 
                 let mut users_lock = USERS.lock().await;
-                if let Some(sender) = users_lock.get_mut(&username) {
-                    let _ = sender.send(Message::text(response_text)).await;
+                if let sendOption = users_lock.get_mut(&incoming.to_id) {
+                    if sendOption.is_none() {
+                        println!("Failed to send response to user '{}': user not online", username);
+                    } else {
+                        let sender = sendOption.unwrap();
+                        let _ = sender.send(Message::text(response_text)).await;
+                    }
                 }
                 println!("Response sended");
             }
