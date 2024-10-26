@@ -4,7 +4,6 @@ use futures::{SinkExt, StreamExt};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::os::unix::raw::time_t;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
@@ -83,7 +82,7 @@ async fn handle_connection(websocket: WebSocket, username: String) {
                 let mut users_lock = USERS.lock().await;
                 if let sendOption = users_lock.get_mut(&incoming.to_id) {
                     if sendOption.is_none() {
-                        println!("Failed to send response to user '{}': user not online", username);
+                        println!("Failed to send response to user '{}': user not online", &incoming.to_id);
                     } else {
                         let sender = sendOption.unwrap();
                         let _ = sender.send(Message::text(response_text)).await;
