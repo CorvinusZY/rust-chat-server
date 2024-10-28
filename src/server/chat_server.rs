@@ -12,7 +12,7 @@ use warp::ws::{Message, WebSocket, Ws};
 use warp::Filter;
 
 type Users = Arc<Mutex<HashMap<String, SplitSink<WebSocket, Message>>>>;
-// Define the global users map
+// Global users store: all active users are here
 static USERS: Lazy<Arc<Mutex<HashMap<String, SplitSink<WebSocket, Message>>>>> =
     Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
 

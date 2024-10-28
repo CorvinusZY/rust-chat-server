@@ -1,14 +1,16 @@
 use rusqlite::{params, Connection};
 
+
 // Define a struct to represent a User
 #[derive(Debug)]
-struct User {
-    id: i32,
-    username: String,
-    password: String,
+pub struct User {
+    pub id: i32,
+    pub username: String,
+    pub password: String,
 }
 
-pub fn create_table(conn: &Connection) {
+// Table Utils
+pub fn create_table(conn: &Connection, users: &[User]) {
     // Create the table if it doesn't exist
     conn.execute(
         "CREATE TABLE IF NOT EXISTS user (
@@ -18,23 +20,26 @@ pub fn create_table(conn: &Connection) {
         )",
         [],
     ).unwrap();
-    println!("User table created");
-    create_prepared_users(conn);
+    println!("User table checked or created");  // not checking if table exists for cleanness
+    create_prepared_users(conn, users);
     println!("User records created");
 }
 
-fn create_prepared_users(conn: &Connection) {
-    // Insert a new person into the table
-    let username = "corvinus";
-    let password = "123";
-    let inserted_rows = conn.execute(
-        "INSERT OR IGNORE INTO user (username, password) VALUES (?1, ?2)",
-        params![username, password],
-    ).unwrap();
-    if inserted_rows > 0 {
-        println!("User created: {username}");
-    } else {
-        println!("User already exists: {username}");
+fn create_prepared_users(conn: &Connection, users: &[User]) {
+    for user in users {
+        // Insert record into the table
+        let id = &user.id;
+        let username = &user.username;
+        let password = &user.password;
+        let inserted_rows = conn.execute(
+            "INSERT OR IGNORE INTO user (id, username, password) VALUES (?1, ?2, ?3)",
+            params![id, username, password],
+        ).unwrap();
+        if inserted_rows > 0 {
+            println!("User created: {username}");
+        } else {
+            println!("User already exists: {username}");
+        }
     }
 }
 
