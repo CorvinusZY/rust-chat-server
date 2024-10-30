@@ -1,6 +1,4 @@
-use once_cell::sync::Lazy;
 use rusqlite::Connection;
-use uuid::Uuid;
 use crate::db::user;
 use crate::db::user::User;
 

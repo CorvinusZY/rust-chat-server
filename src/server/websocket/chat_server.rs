@@ -1,4 +1,4 @@
-use crate::server::auth;
+use crate::server::websocket::auth;
 use futures::stream::SplitSink;
 use futures::{SinkExt, StreamExt};
 use once_cell::sync::Lazy;
@@ -32,7 +32,7 @@ struct ResponseMessage {
     content: String,
 }
 
-pub async fn start_server() {
+pub async fn init() {
     // Define the WebSocket route
     let websocket_route = warp::path("ws")
         .and(warp::ws())
@@ -80,11 +80,11 @@ async fn handle_connection(websocket: WebSocket, username: String) {
                 thread::sleep(Duration::from_secs(2));
 
                 let mut users_lock = USERS.lock().await;
-                if let sendOption = users_lock.get_mut(&incoming.to_id) {
-                    if sendOption.is_none() {
+                if let send_option = users_lock.get_mut(&incoming.to_id) {
+                    if send_option.is_none() {
                         println!("Failed to send response to user '{}': user not online", &incoming.to_id);
                     } else {
-                        let sender = sendOption.unwrap();
+                        let sender = send_option.unwrap();
                         let _ = sender.send(Message::text(response_text)).await;
                     }
                 }

@@ -28,13 +28,12 @@ pub fn create_table(conn: &Connection, users: &[User]) {
 fn create_prepared_users(conn: &Connection, users: &[User]) {
     for user in users {
         // Insert record into the table
-        let id = &user.id;
-        let username = &user.username;
-        let password = &user.password;
         let inserted_rows = conn.execute(
             "INSERT OR IGNORE INTO user (id, username, password) VALUES (?1, ?2, ?3)",
-            params![id, username, password],
+            params![&user.id, &user.username, &user.password],
         ).unwrap();
+
+        let username = &user.username;
         if inserted_rows > 0 {
             println!("User created: {username}");
         } else {

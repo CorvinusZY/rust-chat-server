@@ -1,2 +1,2 @@
-mod auth;
-pub mod chat_server;
+pub mod websocket;
+pub mod http;
