@@ -1,13 +1,13 @@
-mod server;
 mod db;
+mod server;
 
+use crate::server::http::http_server;
 use crate::server::websocket::chat_server;
+use db::*;
 use futures::{SinkExt, StreamExt};
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use warp::Filter;
-use db::*;
-use crate::server::http::http_server;
 
 // #[tokio::main]
 #[rocket::main]
@@ -24,4 +24,3 @@ async fn main() {
     // Launch the Rocket HTTP server concurrently
     http_server::init().await;
 }
-

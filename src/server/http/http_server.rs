@@ -1,23 +1,12 @@
-use rocket::{get, post, routes};
-use rocket::serde::Deserialize;
-use rocket::serde::json::Json;
+use crate::server::http::test_endpoints;
 
-#[derive(Deserialize)]
-struct MyData {
-    message: String,
-}
-
-#[post("/echo", data = "<data>")]
-async fn json_handler(data: Json<MyData>) -> String {
-    let data = data.into_inner(); // Get the actual `MyData` struct
-    format!("Received message: {}", data.message)
-}
-
-#[get("/")]
-fn index() -> &'static str {
-    "Hello, this is the Rocket HTTP server!\n"
-}
+use rocket::{routes};
+use test_endpoints::index;
+use test_endpoints::json_handler;
 
 pub async fn init() {
-    let rocket = rocket::build().mount("/", routes![index, json_handler]).launch().await;
+    let rocket = rocket::build()
+        .mount("/", routes![index, json_handler])
+        .launch()
+        .await;
 }

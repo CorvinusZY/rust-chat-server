@@ -82,7 +82,10 @@ async fn handle_connection(websocket: WebSocket, username: String) {
                 let mut users_lock = USERS.lock().await;
                 if let send_option = users_lock.get_mut(&incoming.to_id) {
                     if send_option.is_none() {
-                        println!("Failed to send response to user '{}': user not online", &incoming.to_id);
+                        println!(
+                            "Failed to send response to user '{}': user not online",
+                            &incoming.to_id
+                        );
                     } else {
                         let sender = send_option.unwrap();
                         let _ = sender.send(Message::text(response_text)).await;
