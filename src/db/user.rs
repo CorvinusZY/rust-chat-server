@@ -1,5 +1,6 @@
 use rusqlite::{params, Connection};
 
+
 // Define a struct to represent a User
 #[derive(Debug)]
 pub struct User {

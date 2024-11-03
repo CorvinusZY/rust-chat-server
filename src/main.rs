@@ -1,5 +1,6 @@
 mod db;
 mod server;
+mod data;
 
 use crate::server::http::http_server;
 use crate::server::websocket::chat_server;
@@ -14,6 +15,7 @@ use warp::Filter;
 async fn main() {
     // Prepare DB
     let conn = Connection::open("my_database.db").unwrap();
+    conn.execute("PRAGMA foreign_keys = ON",  []).unwrap();
     mock_data::prepare_db(&conn);
 
     // Start websocket server

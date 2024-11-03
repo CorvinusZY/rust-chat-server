@@ -1,4 +1,4 @@
-use crate::db::user;
+use crate::db::{message, user};
 use crate::db::user::User;
 use rusqlite::Connection;
 
@@ -12,4 +12,7 @@ pub fn prepare_db(conn: &Connection) {
     }];
     user::create_table(&conn, &users);
     user::inspect_users(&conn);
+
+    // prepare msgs
+    message::create_table(&conn);
 }

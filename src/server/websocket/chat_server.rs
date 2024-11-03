@@ -7,30 +7,23 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
+use chrono::{DateTime, Utc};
+use rusqlite::Connection;
 use tokio::sync::Mutex;
 use warp::ws::{Message, WebSocket, Ws};
 use warp::Filter;
+use crate::data::message::{IncomingMessage, ResponseMessage};
+use crate::db::message;
 
 type Users = Arc<Mutex<HashMap<String, SplitSink<WebSocket, Message>>>>;
 // Global users store: all active users are here
 static USERS: Lazy<Arc<Mutex<HashMap<String, SplitSink<WebSocket, Message>>>>> =
     Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
 
-// Define the structure for JSON messages
-#[derive(Serialize, Deserialize, Debug)]
-struct IncomingMessage {
-    sent_at: String,
-    from_id: String,
-    to_id: String,
-    message_type: String,
-    content: String,
-}
+// static DB_CONNECTION: Lazy<Connection> = Lazy::new(|| {
+//     Connection::open("my_database.db").unwrap()
+// });
 
-#[derive(Serialize, Deserialize, Debug)]
-struct ResponseMessage {
-    response_type: String,
-    content: String,
-}
 
 pub async fn init() {
     // Define the WebSocket route
@@ -69,22 +62,24 @@ async fn handle_connection(websocket: WebSocket, username: String) {
                 println!("Received from client: {:?}", incoming);
 
                 // Create a response message
-                let response = ResponseMessage {
-                    response_type: "echo".to_string(),
-                    content: format!("Echo from {}: {}", &username, incoming.content),
-                };
+                // let response = ResponseMessage {
+                //     response_type: "echo".to_string(),
+                //     content: format!("Echo from {}: {}", &username, incoming.content),
+                // };
 
+                let db = Connection::open("my_database.db").unwrap();
+                message::insert(&incoming, &db);
                 // Serialize response to JSON and send it
                 let response_text = serde_json::to_string(&incoming).unwrap();
                 // add delay for 2 seconds
                 thread::sleep(Duration::from_secs(2));
 
                 let mut users_lock = USERS.lock().await;
-                if let send_option = users_lock.get_mut(&incoming.to_id) {
+                if let send_option = users_lock.get_mut(&incoming.receiver_id) {
                     if send_option.is_none() {
                         println!(
                             "Failed to send response to user '{}': user not online",
-                            &incoming.to_id
+                            &incoming.receiver_id
                         );
                     } else {
                         let sender = send_option.unwrap();
