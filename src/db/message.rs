@@ -1,21 +1,19 @@
-use std::sync::mpsc::Receiver;
 use chrono::{DateTime, Utc};
 use rocket::serde::{Deserialize, Serialize};
 use rusqlite::{params, Connection};
 use crate::data::message::IncomingMessage;
-use crate::db::user::User;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize,)]
 pub(crate) enum MessageType {
     Direct,
     Group,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Message {
     pub message_id: i64,
-    pub sender_id: i32,
-    pub receiver_id: i32,  // can be either a group or a user
+    pub sender: String,
+    pub receiver: String,  // can be either a group or a user
     pub created_at: DateTime<Utc>,
     pub message: String,
     pub message_type: MessageType,
@@ -34,21 +32,21 @@ impl Message {
     }
 }
 
-pub fn get_chat_history(conn: &Connection, user1_id: i32, user2_id: i32) -> Result<Vec<Message>, rusqlite::Error> {
+pub fn get_chat_history(conn: &Connection, username_1: &str, username_2: &str) -> Result<Vec<Message>, rusqlite::Error> {
     let mut stmt = conn.prepare("
-            SELECT message_id, sender_id, receiver_id, created_at, message, message_type
+            SELECT message_id, sender, receiver, created_at, message, message_type
             FROM messages
-            WHERE (sender_id = ?1 AND receiver_id = ?2)
-               OR (sender_id = ?2 AND receiver_id = ?1)
+            WHERE (sender = ?1 AND receiver = ?2)
+               OR (sender = ?2 AND receiver = ?1)
             ORDER BY created_at ASC").unwrap();
 
-    let message_rows = stmt.query_map(params![user1_id, user2_id], |row| {
+    let message_rows = stmt.query_map(params![username_1, username_2], |row| {
         let created_at_str: String = row.get(3)?;
         let created_at = DateTime::parse_from_rfc3339(&created_at_str).unwrap().with_timezone(&Utc);
         Ok(Message {
             message_id: row.get(0)?,
-            sender_id: row.get(1)?,
-            receiver_id: row.get(2)?,
+            sender: row.get(1)?,
+            receiver: row.get(2)?,
             created_at,
             message: row.get(4)?,
             message_type: match row.get::<_, String>(5)?.as_str() {
@@ -64,12 +62,12 @@ pub fn get_chat_history(conn: &Connection, user1_id: i32, user2_id: i32) -> Resu
 }
 
 pub fn get_by_id(conn: &Connection, message_id: i32) -> Result<Message, rusqlite::Error> {
-    let mut stmt = conn.prepare("SELECT message_id, sender_id, receiver_id, created_at, message, message_type FROM messages WHERE message_id = ?1")?;
+    let mut stmt = conn.prepare("SELECT message_id, sender, receiver, created_at, message, message_type FROM messages WHERE message_id = ?1")?;
     let message_row = stmt.query_row(params![message_id], |row| {
         Ok(Message {
             message_id: row.get(0)?,
-            sender_id: row.get(1)?,
-            receiver_id: row.get(2)?,
+            sender: row.get(1)?,
+            receiver: row.get(2)?,
             created_at: DateTime::parse_from_rfc3339(row.get::<_, String>(3)?.as_str()).unwrap().with_timezone(&Utc), // Parse to Utc
             message: row.get(4)?,
             message_type: match row.get::<_, String>(5)?.as_str() {
@@ -85,11 +83,11 @@ pub fn get_by_id(conn: &Connection, message_id: i32) -> Result<Message, rusqlite
 pub fn insert(msg: &IncomingMessage, conn: &Connection) {
     let now = Utc::now().to_rfc3339(); // Get the current time
     conn.execute(
-        "INSERT INTO messages (sender_id, receiver_id, created_at, message, message_type)
+        "INSERT INTO messages (sender, receiver, created_at, message, message_type)
              VALUES (?1, ?2, ?3, ?4, ?5)",
         params![
-                msg.sender_id,
-                msg.receiver_id,
+                msg.sender,
+                msg.receiver,
                 now, // Convert to string for SQLite
                 msg.content,
                 msg.message_type,
@@ -106,8 +104,8 @@ pub fn create_table(conn: &Connection) {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS messages (
             message_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            sender_id INTEGER NOT NULL,
-            receiver_id INTEGER NOT NULL,
+            sender TEXT NOT NULL,
+            receiver TEXT NOT NULL,
             created_at TEXT NOT NULL,
             message TEXT NOT NULL,
             message_type TEXT NOT NULL
