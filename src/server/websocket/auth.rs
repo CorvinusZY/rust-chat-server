@@ -1,8 +1,9 @@
+use rocket::serde::Deserialize;
 use serde::Serialize;
 use warp::http::StatusCode;
 use warp::ws::Ws;
 
-static ALLOW_USERS: [&str; 2] = ["A", "B"];
+static ALLOW_USERS: [&str; 2] = ["corvinus", "winnie"];
 
 // Custom rejection for authentication failure
 #[derive(Debug)]
@@ -15,7 +16,13 @@ struct ErrorResponse {
     message: String,
 }
 
-pub async fn authenticate(ws: Ws, auth_header: String) -> Result<(Ws, String), warp::Rejection> {
+#[derive(Deserialize)]
+pub struct QueryParams {
+    auth: String, // The query parameter to extract
+}
+
+pub async fn authenticate(ws: Ws, params: QueryParams) -> Result<(Ws, String), warp::Rejection> {
+    let auth_header= params.auth.clone();
     if !ALLOW_USERS.contains(&auth_header.as_str()) {
         return Err(warp::reject::custom(AuthenticationError));
     }

@@ -24,12 +24,20 @@ static USERS: Lazy<Arc<Mutex<HashMap<String, SplitSink<WebSocket, Message>>>>> =
 //     Connection::open("my_database.db").unwrap()
 // });
 
-
 pub async fn init() {
     // Define the WebSocket route
+    // let websocket_route = warp::path("ws")
+    //     .and(warp::ws())
+    //     .and(warp::header::<String>("authorization")) // Extract the 'Authorization' header
+    //     .and_then(auth::authenticate)
+    //     .map(|(ws, username): (Ws, String)| {
+    //         let username_clone = username.clone();
+    //         ws.on_upgrade(move |socket| handle_connection(socket, username_clone))
+    //     })
+    //     .recover(auth::handle_rejection);
     let websocket_route = warp::path("ws")
         .and(warp::ws())
-        .and(warp::header::<String>("authorization")) // Extract the 'Authorization' header
+        .and(warp::query::<auth::QueryParams>()) // Extract the 'Authorization' param
         .and_then(auth::authenticate)
         .map(|(ws, username): (Ws, String)| {
             let username_clone = username.clone();
