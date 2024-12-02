@@ -1,9 +1,9 @@
+use crate::data::message::IncomingMessage;
 use chrono::{DateTime, Utc};
 use rocket::serde::{Deserialize, Serialize};
 use rusqlite::{params, Connection};
-use crate::data::message::IncomingMessage;
 
-#[derive(Debug, Serialize, Deserialize,)]
+#[derive(Debug, Serialize, Deserialize)]
 pub(crate) enum MessageType {
     Direct,
     Group,
@@ -20,7 +20,7 @@ impl ToString for MessageType {
 pub struct Message {
     pub message_id: i64,
     pub sender: String,
-    pub receiver: String,  // can be either a group or a user
+    pub receiver: String, // can be either a group or a user
     pub created_at: DateTime<Utc>,
     pub message: String,
     pub message_type: MessageType,
@@ -32,37 +32,50 @@ impl Message {
         conn.execute(
             "DELETE FROM messages WHERE message_id = ?1",
             params![self.message_id],
-        ).unwrap();
+        )
+        .unwrap();
 
         let id = self.message_id;
         println!("Msg delete: {id}");
     }
 }
 
-pub fn get_chat_history(conn: &Connection, username_1: &str, username_2: &str) -> Result<Vec<Message>, rusqlite::Error> {
-    let mut stmt = conn.prepare("
+pub fn get_chat_history(
+    conn: &Connection,
+    username_1: &str,
+    username_2: &str,
+) -> Result<Vec<Message>, rusqlite::Error> {
+    let mut stmt = conn
+        .prepare(
+            "
             SELECT message_id, sender, receiver, created_at, message, message_type
             FROM messages
             WHERE (sender = ?1 AND receiver = ?2)
                OR (sender = ?2 AND receiver = ?1)
-            ORDER BY created_at ASC").unwrap();
+            ORDER BY created_at ASC",
+        )
+        .unwrap();
 
-    let message_rows = stmt.query_map(params![username_1, username_2], |row| {
-        let created_at_str: String = row.get(3)?;
-        let created_at = DateTime::parse_from_rfc3339(&created_at_str).unwrap().with_timezone(&Utc);
-        Ok(Message {
-            message_id: row.get(0)?,
-            sender: row.get(1)?,
-            receiver: row.get(2)?,
-            created_at,
-            message: row.get(4)?,
-            message_type: match row.get::<_, String>(5)?.as_str() {
-                "direct" => MessageType::Direct,
-                "group" => MessageType::Group,
-                _ => unreachable!(),
-            },
+    let message_rows = stmt
+        .query_map(params![username_1, username_2], |row| {
+            let created_at_str: String = row.get(3)?;
+            let created_at = DateTime::parse_from_rfc3339(&created_at_str)
+                .unwrap()
+                .with_timezone(&Utc);
+            Ok(Message {
+                message_id: row.get(0)?,
+                sender: row.get(1)?,
+                receiver: row.get(2)?,
+                created_at,
+                message: row.get(4)?,
+                message_type: match row.get::<_, String>(5)?.as_str() {
+                    "direct" => MessageType::Direct,
+                    "group" => MessageType::Group,
+                    _ => unreachable!(),
+                },
+            })
         })
-    }).unwrap();
+        .unwrap();
 
     let messages: Result<Vec<Message>, rusqlite::Error> = message_rows.collect(); // Collect the results into a Vec<Message>
     messages
@@ -75,7 +88,9 @@ pub fn get_by_id(conn: &Connection, message_id: i32) -> Result<Message, rusqlite
             message_id: row.get(0)?,
             sender: row.get(1)?,
             receiver: row.get(2)?,
-            created_at: DateTime::parse_from_rfc3339(row.get::<_, String>(3)?.as_str()).unwrap().with_timezone(&Utc), // Parse to Utc
+            created_at: DateTime::parse_from_rfc3339(row.get::<_, String>(3)?.as_str())
+                .unwrap()
+                .with_timezone(&Utc), // Parse to Utc
             message: row.get(4)?,
             message_type: match row.get::<_, String>(5)?.as_str() {
                 "direct" => MessageType::Direct,
@@ -93,13 +108,14 @@ pub fn insert(msg: &IncomingMessage, conn: &Connection) {
         "INSERT INTO messages (sender, receiver, created_at, message, message_type)
              VALUES (?1, ?2, ?3, ?4, ?5)",
         params![
-                msg.sender,
-                msg.receiver,
-                now, // Convert to string for SQLite
-                msg.content,
-                msg.message_type,
-            ],
-    ).unwrap();
+            msg.sender,
+            msg.receiver,
+            now, // Convert to string for SQLite
+            msg.content,
+            msg.message_type,
+        ],
+    )
+    .unwrap();
 
     let id = conn.last_insert_rowid();
     println!("Msg created / updated: {id}");
@@ -123,7 +139,6 @@ pub fn insert_direct_record(msg: &Message, conn: &Connection) {
     println!("Msg created / updated: {id}");
 }
 
-
 // Table Utils
 pub fn create_table(conn: &Connection) {
     // Create the table if it doesn't exist
@@ -138,7 +153,6 @@ pub fn create_table(conn: &Connection) {
         )",
         [],
     )
-        .unwrap();
+    .unwrap();
     println!("Message table checked or created"); // not checking if table exists for cleanness
 }
-

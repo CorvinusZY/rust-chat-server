@@ -22,7 +22,7 @@ pub struct QueryParams {
 }
 
 pub async fn authenticate(ws: Ws, params: QueryParams) -> Result<(Ws, String), warp::Rejection> {
-    let auth_header= params.auth.clone();
+    let auth_header = params.auth.clone();
     if !ALLOW_USERS.contains(&auth_header.as_str()) {
         return Err(warp::reject::custom(AuthenticationError));
     }

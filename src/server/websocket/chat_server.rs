@@ -1,19 +1,19 @@
+use crate::data::message::{IncomingMessage, ResponseMessage};
+use crate::db::message;
 use crate::server::websocket::auth;
+use chrono::{DateTime, Utc};
 use futures::stream::SplitSink;
 use futures::{SinkExt, StreamExt};
 use once_cell::sync::Lazy;
+use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
-use chrono::{DateTime, Utc};
-use rusqlite::Connection;
 use tokio::sync::Mutex;
 use warp::ws::{Message, WebSocket, Ws};
 use warp::Filter;
-use crate::data::message::{IncomingMessage, ResponseMessage};
-use crate::db::message;
 
 type Users = Arc<Mutex<HashMap<String, SplitSink<WebSocket, Message>>>>;
 // Global users store: all active users are here
