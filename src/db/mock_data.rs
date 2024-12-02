@@ -1,7 +1,9 @@
+use chrono::{NaiveDateTime, TimeZone, Utc};
 use rocket::form::validate::range;
 use crate::db::{friendship, message, user};
 use crate::db::user::User;
 use rusqlite::Connection;
+use crate::db::message::{Message, MessageType};
 
 pub fn prepare_db(conn: &Connection) {
     println!("Preparing DB...");
@@ -28,7 +30,32 @@ pub fn prepare_db(conn: &Connection) {
     user::inspect_users(&conn);
 
     // prepare msgs
+    // Convert it to DateTime<Utc> if you want to use time zone info
+    let datetime_msg1 = Utc.from_utc_datetime(&NaiveDateTime::parse_from_str("2023-12-01 12:34:56", "%Y-%m-%d %H:%M:%S").unwrap());
+    let datetime_msg2 = Utc.from_utc_datetime(&NaiveDateTime::parse_from_str("2023-12-01 12:42:01", "%Y-%m-%d %H:%M:%S").unwrap());
+
+    let msgs = [
+        Message {
+            message_id: 1,
+            sender: "winnie".to_string(),
+            receiver: "corvinus".to_string(),
+            created_at: datetime_msg1,
+            message: "hello teammate".to_string(),
+            message_type: MessageType::Direct,
+        },
+        Message {
+            message_id: 2,
+            sender: "corvinus".to_string(),
+            receiver: "winnie".to_string(),
+            created_at: datetime_msg2,
+            message: "hello hello".to_string(),
+            message_type: MessageType::Direct,
+        }
+    ];
     message::create_table(&conn);
+    for msg in msgs{
+        message::insert_direct_record(&msg, &conn);
+    }
 
     // prepare friendships
     friendship::create_table(&conn);

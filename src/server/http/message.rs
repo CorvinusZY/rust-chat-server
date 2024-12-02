@@ -18,12 +18,10 @@ struct GetDirectChatHistoryOutput {
     messages: Vec<Message>,
 }
 
-#[get("/chat-history", data = "<data>")]
-pub async fn get_chat_history(data: Json<GetDirectChatHistoryInput>) -> (Status, Json<GetDirectChatHistoryOutput>) {
-    let data = data.into_inner(); // Get the actual `MyData` struct
-
+#[get("/chat-history?<username_a>&<username_b>")]
+pub async fn get_chat_history(username_a: String, username_b: String) -> (Status, Json<GetDirectChatHistoryOutput>) {
     let conn = Connection::open("my_database.db").unwrap();
-    let msgs = message::get_chat_history(&conn, &data.username_a, &data.username_b);
+    let msgs = message::get_chat_history(&conn, &username_a, &username_b);
 
     if msgs.is_ok() {
         let response = GetDirectChatHistoryOutput{

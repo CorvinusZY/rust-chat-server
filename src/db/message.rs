@@ -8,7 +8,14 @@ pub(crate) enum MessageType {
     Direct,
     Group,
 }
-
+impl ToString for MessageType {
+    fn to_string(&self) -> String {
+        match self {
+            MessageType::Direct => "direct".to_string(),
+            MessageType::Group => "group".to_string(),
+        }
+    }
+}
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Message {
     pub message_id: i64,
@@ -97,6 +104,25 @@ pub fn insert(msg: &IncomingMessage, conn: &Connection) {
     let id = conn.last_insert_rowid();
     println!("Msg created / updated: {id}");
 }
+
+pub fn insert_direct_record(msg: &Message, conn: &Connection) {
+    conn.execute(
+        "INSERT OR IGNORE INTO messages (message_id, sender, receiver, created_at, message, message_type)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        params![
+                msg.message_id,
+                msg.sender,
+                msg.receiver,
+                msg.created_at.to_rfc3339(), // Convert to string for SQLite
+                msg.message,
+                msg.message_type.to_string(),
+            ],
+    ).unwrap();
+
+    let id = conn.last_insert_rowid();
+    println!("Msg created / updated: {id}");
+}
+
 
 // Table Utils
 pub fn create_table(conn: &Connection) {

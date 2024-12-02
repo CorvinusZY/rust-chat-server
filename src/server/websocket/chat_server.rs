@@ -65,6 +65,7 @@ async fn handle_connection(websocket: WebSocket, username: String) {
     // Receiving messages from the client
     while let Some(Ok(message)) = ws_rx.next().await {
         if let Ok(text) = message.to_str() {
+            println!("Raw text received from client: {}", text);
             // Parse the incoming JSON message
             if let Ok(incoming) = serde_json::from_str::<IncomingMessage>(text) {
                 println!("Received from client: {:?}", incoming);
