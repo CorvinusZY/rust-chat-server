@@ -1,6 +1,7 @@
-use crate::data::message::{IncomingMessage, ResponseMessage};
+use crate::data::message::IncomingMessage;
+use crate::data::user::UserLoginCredential;
 use crate::db::message;
-use crate::server::websocket::auth;
+use crate::server::websocket::{self, auth};
 use chrono::{DateTime, Utc};
 use futures::stream::SplitSink;
 use futures::{SinkExt, StreamExt};
@@ -67,7 +68,29 @@ async fn handle_connection(websocket: WebSocket, username: String) {
         if let Ok(text) = message.to_str() {
             println!("Raw text received from client: {}", text);
             // Parse the incoming JSON message
-            if let Ok(incoming) = serde_json::from_str::<IncomingMessage>(text) {
+            if let Ok(incoming) = serde_json::from_str::<UserLoginCredential>(text) {
+                match auth::authenticate_password(&incoming).await {
+                    Ok(_) => {}
+                    Err(_) => {
+                        thread::sleep(Duration::from_secs(1));
+                        let mut users_lock = USERS.lock().await;
+                        if let send_option = users_lock.get_mut(&incoming.username) {
+                            if send_option.is_none() {
+                                println!(
+                                    "Failed to send response to user '{}': user not online",
+                                    &incoming.username
+                                );
+                            } else {
+                                let sender = send_option.unwrap();
+                                let _ = sender
+                                    .send(Message::text("Unauthorized: Invalid credentials"))
+                                    .await;
+                            }
+                        }
+                        println!("Response sended");
+                    }
+                };
+            } else if let Ok(incoming) = serde_json::from_str::<IncomingMessage>(text) {
                 println!("Received from client: {:?}", incoming);
 
                 // Create a response message

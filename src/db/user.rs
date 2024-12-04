@@ -65,3 +65,14 @@ pub fn inspect_users(conn: &Connection) {
         println!("{:?}", person.unwrap());
     }
 }
+pub fn get_by_username(conn: &Connection, username: String) -> Result<User, rusqlite::Error> {
+    let mut stmt = conn.prepare("SELECT id, username, password FROM user WHERE username = ?1")?;
+    let user_row = stmt.query_row(params![username], |row| {
+        Ok(User {
+            id: row.get(0)?,
+            username: row.get(1)?,
+            password: row.get(2)?,
+        })
+    })?;
+    Ok(user_row)
+}
