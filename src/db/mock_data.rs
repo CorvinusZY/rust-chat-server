@@ -13,16 +13,19 @@ pub fn prepare_db(conn: &Connection) {
             id: 1,
             username: "corvinus".to_string(),
             password: "123".to_string(),
+            picture: "https://chatscope.io/storybook/react/assets/eliot-JNkqSAth.svg".to_string(),
         },
         User {
             id: 2,
             username: "winnie".to_string(),
             password: "456".to_string(),
+            picture: "https://chatscope.io/storybook/react/assets/lilly-aj6lnGPk.svg".to_string(),
         },
         User {
             id: 3,
             username: "john".to_string(),
             password: "789".to_string(),
+            picture: "https://chatscope.io/storybook/react/assets/zoe-E7ZdmXF0.svg".to_string(),
         },
     ];
 
