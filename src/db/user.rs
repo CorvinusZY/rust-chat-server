@@ -6,7 +6,6 @@ pub struct User {
     pub id: i32,
     pub username: String,
     pub password: String,
-    pub picture: String,
 }
 
 // Table Utils
@@ -16,8 +15,7 @@ pub fn create_table(conn: &Connection, users: &[User]) {
         "CREATE TABLE IF NOT EXISTS user (
             id INTEGER PRIMARY KEY,
             username TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL,
-            picture TEXT NOT NULL
+            password TEXT NOT NULL
         )",
         [],
     )
@@ -32,8 +30,8 @@ fn create_prepared_users(conn: &Connection, users: &[User]) {
         // Insert record into the table
         let inserted_rows = conn
             .execute(
-                "INSERT OR IGNORE INTO user (id, username, password, picture) VALUES (?1, ?2, ?3, ?4)",
-                params![&user.id, &user.username, &user.password, &user.picture],
+                "INSERT OR IGNORE INTO user (id, username, password) VALUES (?1, ?2, ?3)",
+                params![&user.id, &user.username, &user.password],
             )
             .unwrap();
 
@@ -50,7 +48,7 @@ pub fn inspect_users(conn: &Connection) {
     println!("Inspecting users");
     // Query and print data
     let mut stmt = conn
-        .prepare("SELECT id, username, password, picture FROM user")
+        .prepare("SELECT id, username, password FROM user")
         .unwrap();
     let person_iter = stmt
         .query_map([], |row| {
@@ -58,7 +56,6 @@ pub fn inspect_users(conn: &Connection) {
                 id: row.get(0)?,
                 username: row.get(1)?,
                 password: row.get(2)?,
-                picture: row.get(3)?,
             })
         })
         .unwrap();
@@ -69,14 +66,12 @@ pub fn inspect_users(conn: &Connection) {
     }
 }
 pub fn get_by_username(conn: &Connection, username: String) -> Result<User, rusqlite::Error> {
-    let mut stmt =
-        conn.prepare("SELECT id, username, password, picture FROM user WHERE username = ?1")?;
+    let mut stmt = conn.prepare("SELECT id, username, password FROM user WHERE username = ?1")?;
     let user_row = stmt.query_row(params![username], |row| {
         Ok(User {
             id: row.get(0)?,
             username: row.get(1)?,
             password: row.get(2)?,
-            picture: row.get(3)?,
         })
     })?;
     Ok(user_row)
