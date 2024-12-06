@@ -1,17 +1,10 @@
 use crate::db::message;
 use crate::db::message::Message;
+use rocket::get;
 use rocket::http::Status;
 use rocket::serde::json::Json;
-use rocket::serde::{Deserialize, Serialize};
-use rocket::{get, post};
+use rocket::serde::Serialize;
 use rusqlite::Connection;
-
-// Get chat history for direct messaging
-#[derive(Deserialize)]
-struct GetDirectChatHistoryInput {
-    username_a: String,
-    username_b: String,
-}
 
 #[derive(Serialize)]
 struct GetDirectChatHistoryOutput {

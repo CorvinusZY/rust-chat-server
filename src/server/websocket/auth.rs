@@ -1,9 +1,7 @@
-use crate::data::user::UserLoginCredential;
 use crate::db::user;
 use rocket::serde::Deserialize;
 use rusqlite::Connection;
 use serde::Serialize;
-use serde_json::{self};
 use warp::http::StatusCode;
 use warp::ws::Ws;
 
@@ -22,36 +20,35 @@ struct ErrorResponse {
 
 #[derive(Debug, Deserialize)]
 pub struct QueryParams {
-    auth: String, // The query parameter to extract
+    name: String, // This is name. bad wording
+    password: String,
 }
 
 pub async fn authenticate(ws: Ws, params: QueryParams) -> Result<(Ws, String), warp::Rejection> {
-    let auth_header = params.auth.clone();
+    let auth_header = params.name.clone();
     if !ALLOW_USERS.contains(&auth_header.as_str()) {
         return Err(warp::reject::custom(AuthenticationError));
     }
-    println!("Successfully authenticated user {auth_header}");
-    Ok((ws, auth_header))
+
+    if authenticate_password(params.name.clone(), params.password.clone()) {
+        Ok((ws, auth_header))
+    } else {
+        Err(warp::reject::custom(AuthenticationError))
+    }
 }
 
-pub async fn authenticate_password(
-    credential: &UserLoginCredential,
-) -> Result<String, warp::Rejection> {
-    let username = credential.username.clone();
-    let password = credential.password.clone();
-
+pub fn authenticate_password(username: String, password: String) -> bool {
     let conn = Connection::open("my_database.db").unwrap();
-    let user = user::get_by_username(&conn, username);
+    let user = user::get_by_username(&conn, username.clone());
 
     if user.unwrap().password != password {
-        return Err(warp::reject::custom(AuthenticationError));
+        return false;
     }
-
     println!(
         "Successfully authenticated user {} and password",
-        credential.username.clone()
+        username.clone()
     );
-    Ok(credential.username.clone())
+    true
 }
 
 pub async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, warp::Rejection> {

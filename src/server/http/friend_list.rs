@@ -2,14 +2,8 @@ use crate::db::user;
 use rocket::get;
 use rocket::http::Status;
 use rocket::serde::json::Json;
-use rocket::serde::{Deserialize, Serialize};
+use rocket::serde::Serialize;
 use rusqlite::Connection;
-
-//Get chat history for direct messaging
-#[derive(Deserialize)]
-struct GetFriendsInput {
-    from_username: String,
-}
 
 #[derive(Serialize)]
 struct GetFriendsOutput {

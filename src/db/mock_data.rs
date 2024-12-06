@@ -2,7 +2,6 @@ use crate::db::message::{Message, MessageType};
 use crate::db::user::User;
 use crate::db::{friendship, message, user};
 use chrono::{NaiveDateTime, TimeZone, Utc};
-use rocket::form::validate::range;
 use rusqlite::Connection;
 
 pub fn prepare_db(conn: &Connection) {

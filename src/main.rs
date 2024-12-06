@@ -5,10 +5,7 @@ mod server;
 use crate::server::http::http_server;
 use crate::server::websocket::chat_server;
 use db::*;
-use futures::{SinkExt, StreamExt};
 use rusqlite::Connection;
-use serde::{Deserialize, Serialize};
-use warp::Filter;
 
 // #[tokio::main]
 #[rocket::main]

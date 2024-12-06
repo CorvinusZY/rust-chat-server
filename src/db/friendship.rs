@@ -1,7 +1,3 @@
-use crate::data::message::IncomingMessage;
-use crate::db::message::{Message, MessageType};
-use crate::db::user::User;
-use chrono::{DateTime, Utc};
 use rocket::serde::{Deserialize, Serialize};
 use rusqlite::{params, Connection};
 
@@ -38,7 +34,6 @@ pub fn get_friends(
 }
 
 pub fn insert(username_a: &str, username_b: &str, conn: &Connection) {
-    let now = Utc::now().to_rfc3339(); // Get the current time
     conn.execute(
         "INSERT OR IGNORE INTO friendships (from_username, to_username) VALUES (?, ?)",
         params![username_a, username_b,],

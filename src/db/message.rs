@@ -81,27 +81,6 @@ pub fn get_chat_history(
     messages
 }
 
-pub fn get_by_id(conn: &Connection, message_id: i32) -> Result<Message, rusqlite::Error> {
-    let mut stmt = conn.prepare("SELECT message_id, sender, receiver, created_at, message, message_type FROM messages WHERE message_id = ?1")?;
-    let message_row = stmt.query_row(params![message_id], |row| {
-        Ok(Message {
-            message_id: row.get(0)?,
-            sender: row.get(1)?,
-            receiver: row.get(2)?,
-            created_at: DateTime::parse_from_rfc3339(row.get::<_, String>(3)?.as_str())
-                .unwrap()
-                .with_timezone(&Utc), // Parse to Utc
-            message: row.get(4)?,
-            message_type: match row.get::<_, String>(5)?.as_str() {
-                "direct" => MessageType::Direct,
-                "group" => MessageType::Group,
-                _ => unreachable!(),
-            },
-        })
-    })?;
-    Ok(message_row)
-}
-
 pub fn insert(msg: &IncomingMessage, conn: &Connection) {
     let now = Utc::now().to_rfc3339(); // Get the current time
     conn.execute(
@@ -155,4 +134,26 @@ pub fn create_table(conn: &Connection) {
     )
     .unwrap();
     println!("Message table checked or created"); // not checking if table exists for cleanness
+}
+
+// debug function
+pub fn get_by_id(conn: &Connection, message_id: i32) -> Result<Message, rusqlite::Error> {
+    let mut stmt = conn.prepare("SELECT message_id, sender, receiver, created_at, message, message_type FROM messages WHERE message_id = ?1")?;
+    let message_row = stmt.query_row(params![message_id], |row| {
+        Ok(Message {
+            message_id: row.get(0)?,
+            sender: row.get(1)?,
+            receiver: row.get(2)?,
+            created_at: DateTime::parse_from_rfc3339(row.get::<_, String>(3)?.as_str())
+                .unwrap()
+                .with_timezone(&Utc), // Parse to Utc
+            message: row.get(4)?,
+            message_type: match row.get::<_, String>(5)?.as_str() {
+                "direct" => MessageType::Direct,
+                "group" => MessageType::Group,
+                _ => unreachable!(),
+            },
+        })
+    })?;
+    Ok(message_row)
 }

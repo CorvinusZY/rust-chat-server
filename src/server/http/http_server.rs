@@ -6,7 +6,7 @@ use test_endpoints::index;
 use test_endpoints::json_handler;
 
 pub async fn init() {
-    let rocket = rocket::build()
+    let _ = rocket::build()
         .mount(
             "/",
             routes![index, json_handler, get_chat_history, get_friends],

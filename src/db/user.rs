@@ -104,5 +104,6 @@ pub fn get_friends_profile(
             })
         })
         .unwrap();
-    return user_rows.collect();
+
+    user_rows.collect()
 }
