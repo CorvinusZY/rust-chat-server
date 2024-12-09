@@ -1,4 +1,6 @@
 use crate::db::user;
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use rocket::serde::Deserialize;
 use rusqlite::Connection;
 use serde::Serialize;
@@ -30,11 +32,18 @@ pub async fn authenticate(ws: Ws, params: QueryParams) -> Result<(Ws, String), w
         return Err(warp::reject::custom(AuthenticationError));
     }
 
-    if authenticate_password(params.name.clone(), params.password.clone()) {
+    let decode_password = decode_password(params.password.clone()).unwrap();
+    if authenticate_password(params.name.clone(), decode_password) {
         Ok((ws, auth_header))
     } else {
         Err(warp::reject::custom(AuthenticationError))
     }
+}
+
+pub fn decode_password(encoded_password: String) -> Result<String, base64::DecodeError> {
+    let decoded_bytes = STANDARD.decode(encoded_password)?;
+    let decoded_password = String::from_utf8(decoded_bytes).expect("Invalid UTF-8 sequence");
+    Ok(decoded_password)
 }
 
 pub fn authenticate_password(username: String, password: String) -> bool {
