@@ -1,5 +1,8 @@
 # rust-chat-server
 
+### Video Demo
+https://youtu.be/wlSNHgB19pU
+
 ### Run Server
 - Simply run `cargo run`
 
