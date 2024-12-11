@@ -7,7 +7,7 @@ use serde::Serialize;
 use warp::http::StatusCode;
 use warp::ws::Ws;
 
-static ALLOW_USERS: [&str; 2] = ["corvinus", "winnie"];
+static ALLOW_USERS: [&str; 3] = ["corvinus", "winnie", "john"];
 
 // Custom rejection for authentication failure
 #[derive(Debug)]
